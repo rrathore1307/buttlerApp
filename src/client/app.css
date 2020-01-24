@@ -1,0 +1,16 @@
+h1 {
+  color: green;
+}
+
+body {
+  text-align: center;
+  margin: auto;
+}
+.inputBox {
+  margin-top: 40px;
+  display: inline-flexbox;
+}
+textarea {
+  width: 300px;
+  height: 200px;
+}
