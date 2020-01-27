@@ -11,11 +11,11 @@ export default class App extends Component {
     inputValue: '',
     tableData : [],
     response: [],
+    jsonError: false
   };
 
   submitHandler = () => {
     if (this.state.inputValue) {
-
       const requestObj = this.state.inputValue;
       try {
         let obj = JSON.parse(requestObj.replace(/\r?\n|\r/g, ''),'')
@@ -43,7 +43,7 @@ export default class App extends Component {
                       return null;
                       });
                     }
-                    console.log('total', total);
+                    // console.log('total', total);
                     item.name = `B${index + 1}`
                     item.total = total;
                     return null;
@@ -58,9 +58,13 @@ export default class App extends Component {
                   this.setState({
                     tableData: butlersReq,
                     columns,
+                    jsonError: false
                   });
               })
       } catch (error) {
+        this.setState({
+          jsonError: true
+        })
         return null;
       }
     }
@@ -72,7 +76,7 @@ export default class App extends Component {
 
   getTrProps = (state, rowInfo, instance) => {
     if (rowInfo) {
-      console.log('rowInfo', rowInfo);
+      // console.log('rowInfo', rowInfo);
       return {
         style: {
           background: rowInfo.row._original.total >= 8 ? 'green' : rowInfo.row._original.total >=6 ? 'orange' : 'red',
@@ -83,23 +87,45 @@ export default class App extends Component {
     return {};
   }
 
+  inputHandler =(event)=>{
+
+    this.setState({ inputValue: event.target.value})
+
+    try {
+      if(JSON.parse(event.target.value)) {
+        this.setState({
+          jsonError: false
+        })
+      }
+    }catch (error) {
+      this.setState({
+        jsonError: true
+      })
+    }
+
+  }
+
   render() {
     const { tableData, columns } = this.state;
     return (
-      <div className='inputBox'>
+      <div>
+        <div className='inputBox'>
         <div>
           {/* <input type='file' onChange={(event) => { this.setState({ inputValue: event.target.value }) }} value={this.state.inputValue}/> */}
-          <textarea type='input' cols='6' value={this.state.inputValue} onChange={(event) => { this.setState({ inputValue: event.target.value }) }} />
+          <textarea type='input' cols='6' value={this.state.inputValue} onChange={(event) => this.inputHandler(event) } />
         </div>
-        <div>
+        {
+          this.state.jsonError ?
+          <div className='error'>Please enter valid json format</div> :
+          null
+        }
+        <div className='submitBtn'>
           <button onClick={this.submitHandler}>
             Submit
         </button>
         </div>
-
-        <div>
         </div>
-        {tableData.length > 0 && <ReactTable
+        {!this.state.jsonError && tableData.length > 0 && <ReactTable
           data={tableData}
           columns={columns}
           defaultPageSize={10}

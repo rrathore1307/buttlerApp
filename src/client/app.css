@@ -29,3 +29,11 @@ textarea {
 .red {
   background: red;
 }
+.error {
+  color: red;
+  margin-top: 10px;
+}
+.submitBtn {
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
