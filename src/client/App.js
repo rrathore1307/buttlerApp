@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import './app.css';
 import ReactTable from 'react-table-6';
 import {dataPrepare} from './util';
-import allocatAndReports from '../server/process' 
 import 'react-table-6/react-table.css'
 import axios from 'axios'
 
@@ -10,58 +9,60 @@ export default class App extends Component {
   state = {
     username: null,
     inputValue: '',
-    tableData : {}
+    tableData : [],
+    response: [],
   };
-
-  componentDidMount() {
-    this.setState({
-      tableData: dataPrepare()
-    })
-
-    fetch('/butler-response')
-      .then(res => res.json())
-      .then(user => this.setState({ username: user.username }));
-      console.log(dataPrepare())
-      
-
-  }
-  // submitHandler = () => {
-  //   if (this.state.inputValue) {
-  //     console.log(this.state.inputValue)
-
-  //     const requestObj = this.state.inputValue;
-  //     console.log(requestObj)
-
-  //     axios.post('/api/client-request', requestObj)
-  //           .then(response=>{
-  //               return response.data
-  //           })
-  //           .then(data=>{
-  //               console.log('----------')
-  //               console.log(data)
-  //               console.log('----------')
-  //           })
-  //   }
-  // }
 
   submitHandler = () => {
     if (this.state.inputValue) {
-      console.log(this.state.inputValue)
 
       const requestObj = this.state.inputValue;
-      console.log(requestObj)
-      allocatAndReports(requestObj);
-
-
-      // axios.post('/api/client-request', requestObj)
-      //       .then(response=>{
-      //           return response.data
-      //       })
-      //       .then(data=>{
-      //           console.log('----------')
-      //           console.log(data)
-      //           console.log('----------')
-      //       })
+      try {
+        let obj = JSON.parse(requestObj.replace(/\r?\n|\r/g, ''),'')
+        const demo = {'req': obj}
+        let data = {data: demo.req.exampleRequests};
+        axios.post('/api/client-request', data)
+              .then(response=>{
+                  return response.data
+              })
+              .then(response=>{
+                  const butlersReq = [...response.data];
+                  const columns = [{
+                    Header: 'Butlers / request',
+                    accessor: 'name'
+                  }];
+                  butlersReq.map((item, index) => {
+                    let total = 0;
+                    if(item.requests) {
+                      item.requests.map(req => {
+                        const reqData = data.data.filter(option => option.requestId === req);
+                      if(reqData) {
+                        item[req] = reqData[0].hours;
+                        total += reqData[0].hours;
+                      }
+                      return null;
+                      });
+                    }
+                    console.log('total', total);
+                    item.name = `B${index + 1}`
+                    item.total = total;
+                    return null;
+                  });
+                  data.data.map(item => {
+                    columns.push({
+                      Header: item.requestId,
+                      accessor: item.requestId,
+                      Cell: props => <span className={`rows`}>{props.value}</span>
+                    });
+                  });
+                  this.setState({
+                    tableData: butlersReq,
+                    columns,
+                  });
+              })
+      } catch (error) {
+        return null;
+      }
     }
   }
 
@@ -69,24 +70,25 @@ export default class App extends Component {
     return <span></span>
   }
 
+  getTrProps = (state, rowInfo, instance) => {
+    if (rowInfo) {
+      console.log('rowInfo', rowInfo);
+      return {
+        style: {
+          background: rowInfo.row._original.total >= 8 ? 'green' : rowInfo.row._original.total >=6 ? 'orange' : 'red',
+          color: 'white'
+        }
+      }
+    }
+    return {};
+  }
+
   render() {
-    const { username} = this.state;
-    const {headers, butlers, newData} = this.state.tableData;
-    console.log(this.state.tableData)
-    headers && headers.map(head=>{
-      console.log(head)
-      butlers.map(bt=>{
-          bt.requests.map(req=>{
-             const clObj = newData[req]
-              if(clObj.clientId==head) {
-                  console.log(clObj.hours)
-              }
-          })
-      })
-  })
+    const { tableData, columns } = this.state;
     return (
       <div className='inputBox'>
         <div>
+          {/* <input type='file' onChange={(event) => { this.setState({ inputValue: event.target.value }) }} value={this.state.inputValue}/> */}
           <textarea type='input' cols='6' value={this.state.inputValue} onChange={(event) => { this.setState({ inputValue: event.target.value }) }} />
         </div>
         <div>
@@ -96,41 +98,13 @@ export default class App extends Component {
         </div>
 
         <div>
-        <table className="table">
-    <thead>
-      <tr>
-       {
-         headers && headers.map(head=>{
-          console.log(head)
-         return <th key={head}>{head}</th>
-      })
-       }
-      </tr>
-    </thead>
-    <tbody>
-      
-        {
-         headers && headers.map(head=>{
-           return butlers.map(bt=>{
-             
-           let demo =  bt.requests.map(req=>{
-                   const clObj = newData[req]
-                   console.log(clObj)
-                  //  return <tr><td>w</td></tr>
-                   if(clObj.clientId==head) {
-                      console.log(clObj)
-                   return <td>{clObj.hours}</td>
-                    }
-                })
-                
-                return demo;
-                console.log(demo)
-            })
-        })
-        }
-    </tbody>
-  </table>
         </div>
+        {tableData.length > 0 && <ReactTable
+          data={tableData}
+          columns={columns}
+          defaultPageSize={10}
+          getTrProps={this.getTrProps}
+        />}
       </div>
     );
   }

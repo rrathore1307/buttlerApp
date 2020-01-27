@@ -40,10 +40,20 @@ export const dataPrepare = ()=> {
         newData[el.requestId] = el
         
     })
-
-    
-
-
+    const butlersReq = [...butlers];
+    butlersReq.map(item => {
+        if(item.requests) {
+            item.requests.map(req => {
+               const reqData = cdata.filter(option => option.requestId === req);
+            if(reqData) {
+                item[req] = reqData[0].hours;
+            }
+            return null;
+            });
+        }
+        return null;
+    });
+console.log('butlersReq', butlersReq);
     // console.log(newData)
     headers.map(head=>{
         console.log(head)

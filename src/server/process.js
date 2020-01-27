@@ -1,4 +1,4 @@
-export const allocatAndReports = (arr) => {
+const allocatAndReports = (arr) => {
     // Try edit message
     const arr2 = [
         {
