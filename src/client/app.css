@@ -37,3 +37,9 @@ textarea {
   margin-top: 10px;
   margin-bottom: 20px;
 }
+.lableTxt {
+  margin-bottom: 10px;
+}
+.textBold {
+  font-weight: bold;
+}
